@@ -11,19 +11,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
  * @modify date 2019-01-09 16:55:19
  * @desc [upload]
  */
-// ### Example:
-// app.Use(
-//   Upload({
-//     async saveAnalysis(files) {
-//       console.log(files)
-//     },
-//     async findAnalysis() {
-//     }
-//   })
-// )
 const assert = require('assert').strict;
-
-const ExcelJs = require('exceljs');
 
 const utils = require('./utils');
 
@@ -46,10 +34,7 @@ module.exports = (_ref) => {
         } = _ref2;
         assert.ok(is.function(saveAnalysis), 'saveAnalysis can not be empty!');
         assert.ok(is.function(findAnalysis), 'findAnalysis can not be empty!');
-        /**
-         * upload file
-         */
-
+        assert.ok(is.string(uploadPrefix), 'uploadPrefix can not be empty!');
         router.post('/upload',
         /*#__PURE__*/
         function () {
@@ -58,7 +43,7 @@ module.exports = (_ref) => {
               const files = ctx.request.files;
               const fields = ctx.request.body;
               const {
-                analysis = false
+                toAnalysis
               } = fields;
               const fileNames = Object.keys(files);
               const results = [];
@@ -73,14 +58,14 @@ module.exports = (_ref) => {
                     strategys
                   } = module.exports.strategys.find(x => x.type === file.type) || {};
                   const ret = {
-                    type: file.type,
                     uid: utils.randomStr(32).toLowerCase(),
-                    status: 'done',
                     name: file.name,
+                    type: file.type,
+                    status: 'done',
                     url: `${uploadPrefix}/${parse.base}`
                   };
 
-                  if (analysis && strategys) {
+                  if (toAnalysis && strategys) {
                     const result = yield strategys(file);
                     results.push(Object.assign({}, ret, result));
                   }
@@ -92,7 +77,11 @@ module.exports = (_ref) => {
                   return _ref5.apply(this, arguments);
                 };
               }()));
-              yield saveAnalysis(results);
+
+              if (toAnalysis) {
+                yield saveAnalysis(results);
+              }
+
               ctx.status = 200;
               ctx.body = data;
             } catch (error) {
@@ -121,31 +110,4 @@ module.exports = (_ref) => {
   );
 };
 
-module.exports.strategys = [{
-  type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  strategys: function () {
-    var _ref6 = _asyncToGenerator(function* (file) {
-      const workbook = new ExcelJs.Workbook();
-      const books = yield workbook.xlsx.readFile(file.path);
-      const result = {
-        name: file.name,
-        content: []
-      };
-      books.worksheets.forEach(sheet => {
-        const ret = {
-          sheet: sheet.name,
-          rows: []
-        };
-        sheet.eachRow(function (row, rowNumber) {
-          ret.rows.push(row.values);
-        });
-        result.content.push(ret);
-      });
-      return result;
-    });
-
-    return function strategys(_x4) {
-      return _ref6.apply(this, arguments);
-    };
-  }()
-}];
+module.exports.strategys = utils.strategys;
