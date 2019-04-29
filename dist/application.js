@@ -23,7 +23,7 @@ module.exports = (_ref) => {
   let {
     saveAnalysis,
     findAnalysis,
-    uploadPrefix = '/public/upload'
+    urlPrefix = '/public/upload'
   } = _ref;
   return (
     /*#__PURE__*/
@@ -34,7 +34,7 @@ module.exports = (_ref) => {
         } = _ref2;
         assert.ok(is.function(saveAnalysis), 'saveAnalysis can not be empty!');
         assert.ok(is.function(findAnalysis), 'findAnalysis can not be empty!');
-        assert.ok(is.string(uploadPrefix), 'uploadPrefix can not be empty!');
+        assert.ok(is.string(urlPrefix), 'urlPrefix can not be empty!');
         router.post('/upload',
         /*#__PURE__*/
         function () {
@@ -62,7 +62,7 @@ module.exports = (_ref) => {
                     name: file.name,
                     type: file.type,
                     status: 'done',
-                    url: `${uploadPrefix}/${parse.base}`
+                    url: `${urlPrefix}/${parse.base}`
                   };
 
                   if (toAnalysis && strategys) {
