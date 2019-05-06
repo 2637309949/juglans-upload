@@ -21,9 +21,10 @@ const is = require('is');
 
 module.exports = (_ref) => {
   let {
+    urlPrefix = '/upload',
+    deliveryPath = '/public/upload',
     saveAnalysis,
-    findAnalysis,
-    urlPrefix = '/public/upload'
+    findAnalysis
   } = _ref;
   return (
     /*#__PURE__*/
@@ -34,8 +35,9 @@ module.exports = (_ref) => {
         } = _ref2;
         assert.ok(is.function(saveAnalysis), 'saveAnalysis can not be empty!');
         assert.ok(is.function(findAnalysis), 'findAnalysis can not be empty!');
+        assert.ok(is.string(deliveryPath), 'deliveryPath can not be empty!');
         assert.ok(is.string(urlPrefix), 'urlPrefix can not be empty!');
-        router.post('/upload',
+        router.post(urlPrefix,
         /*#__PURE__*/
         function () {
           var _ref4 = _asyncToGenerator(function* (ctx) {
@@ -62,7 +64,7 @@ module.exports = (_ref) => {
                     name: file.name,
                     type: file.type,
                     status: 'done',
-                    url: `${urlPrefix}/${parse.base}`
+                    url: `${deliveryPath}/${parse.base}`
                   };
 
                   if (toAnalysis && strategys) {
@@ -79,7 +81,7 @@ module.exports = (_ref) => {
               }()));
 
               if (toAnalysis) {
-                yield saveAnalysis(results);
+                saveAnalysis(results);
               }
 
               ctx.status = 200;
