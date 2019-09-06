@@ -57,6 +57,7 @@
   "dependencies": {
     "exceljs": "^1.15.0",
     "is": "^3.3.0",
+    "koa-body": "^4.1.1",
     "koa-roles": "^2.0.0",
     "moment": "^2.24.0"
   }

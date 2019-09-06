@@ -11,17 +11,34 @@ const assert = require('assert').strict;
 
 const utils = require('./utils');
 
+const koaBody = require('koa-body');
+
 const path = require('path');
 
 const is = require('is');
 
-module.exports = (_ref) => {
+module.exports = function () {
   let {
-    urlPrefix = '/upload',
-    deliveryPath = '/public/upload',
-    saveAnalysis,
-    findAnalysis
-  } = _ref;
+    prefix = '/upload',
+    assetsPrefix = '/public/upload',
+    uploadPrefix = path.join(__dirname, '../assets/public/upload'),
+    bodyOptions = {
+      multipart: true,
+      formidable: {
+        keepExtensions: true,
+        uploadDir: uploadPrefix
+      }
+    },
+    save =
+    /*#__PURE__*/
+    function () {
+      var _ref = _asyncToGenerator(function* (c, ret) {});
+
+      return function (_x, _x2) {
+        return _ref.apply(this, arguments);
+      };
+    }()
+  } = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
   return (
     /*#__PURE__*/
     function () {
@@ -29,59 +46,39 @@ module.exports = (_ref) => {
         let {
           router
         } = _ref2;
-        assert.ok(is.function(saveAnalysis), 'saveAnalysis can not be empty!');
-        assert.ok(is.function(findAnalysis), 'findAnalysis can not be empty!');
-        assert.ok(is.string(deliveryPath), 'deliveryPath can not be empty!');
-        assert.ok(is.string(urlPrefix), 'urlPrefix can not be empty!');
-        router.post(urlPrefix,
+        assert.ok(is.string(prefix), 'prefix can not be empty!');
+        assert.ok(is.string(assetsPrefix), 'assetsPath can not be empty!');
+        assert.ok(is.string(uploadPrefix), 'uploadPrefix can not be empty!');
+        assert.ok(is.function(save), 'save should be function!');
+        router.post(prefix, koaBody(bodyOptions),
         /*#__PURE__*/
         function () {
           var _ref4 = _asyncToGenerator(function* (ctx) {
             try {
               const files = ctx.request.files;
-              const fields = ctx.request.body;
-              const {
-                toAnalysis
-              } = fields;
-              const fileNames = Object.keys(files);
-              const results = [];
-              const data = yield Promise.all(fileNames.map(
-              /*#__PURE__*/
-              function () {
-                var _ref5 = _asyncToGenerator(function* (x) {
-                  const fileName = x;
-                  const file = files[fileName];
+              const ret = [];
+
+              for (const filename in files) {
+                if (files.hasOwnProperty(filename)) {
+                  const file = files[filename];
                   const parse = path.parse(file.path);
-                  const {
-                    strategys
-                  } = module.exports.strategys.find(x => x.type === file.type) || {};
-                  const ret = {
-                    uid: utils.randomStr(32).toLowerCase(),
-                    name: file.name,
-                    type: file.type,
+                  const fileInfo = {
+                    uuid: utils.randomStr(32).toLowerCase(),
                     status: 'done',
-                    url: `${deliveryPath}/${parse.base}`
+                    name: file.name,
+                    size: file.size,
+                    url: `${assetsPrefix}/${parse.base}`
                   };
+                  ret.push(fileInfo);
+                }
+              }
 
-                  if (toAnalysis && strategys) {
-                    const result = yield strategys(file);
-                    results.push(Object.assign({}, ret, result));
-                  }
-
-                  return ret;
-                });
-
-                return function (_x3) {
-                  return _ref5.apply(this, arguments);
-                };
-              }()));
-
-              if (toAnalysis) {
-                saveAnalysis(results);
+              if (save !== null) {
+                yield save(ctx, ret);
               }
 
               ctx.status = 200;
-              ctx.body = data;
+              ctx.body = ret;
             } catch (error) {
               console.error(error.stack);
               ctx.body = {
@@ -90,22 +87,15 @@ module.exports = (_ref) => {
             }
           });
 
-          return function (_x2) {
+          return function (_x4) {
             return _ref4.apply(this, arguments);
           };
         }());
-        return {
-          upload: {
-            findAnalysis
-          }
-        };
       });
 
-      return function (_x) {
+      return function (_x3) {
         return _ref3.apply(this, arguments);
       };
     }()
   );
 };
-
-module.exports.strategys = utils.strategys;
